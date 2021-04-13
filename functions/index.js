@@ -14,3 +14,11 @@ exports.toGoogle = functions
     .https.onRequest((request, response) => {
         response.redirect('https://www.google.com');
     });
+
+// http callable functions
+exports.sayHello = functions
+    .region('asia-south1')
+    .https.onCall((data, context) => {
+        const { name } = data;
+        return `Hello, ${name} the ninja`;
+    });
