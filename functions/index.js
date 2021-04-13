@@ -3,7 +3,6 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 
 // auth triggers (user signUp)
-
 exports.newUserSignUp = functions
     .region('asia-south1')
     .auth.user()
@@ -16,7 +15,6 @@ exports.newUserSignUp = functions
     });
 
 // auth triggers (user delete)
-
 exports.userDelete = functions
     .region('asia-south1')
     .auth.user()
@@ -24,6 +22,28 @@ exports.userDelete = functions
         // for background trigger you must return a promise/value
         const userData = admin.firestore().collection('users').doc(user.uid);
         return userData.delete();
+    });
+
+// http callable function adding new tutorial request
+exports.addRequest = functions
+    .region('asia-south1')
+    .https.onCall((data, context) => {
+        if (!context.auth) {
+            throw new functions.https.HttpsError(
+                'unauthenticated',
+                'Only authenicated users can add allowed'
+            );
+        }
+        if (data.text.length > 30) {
+            throw new functions.https.HttpsError(
+                'invalid-argument',
+                'Request must be less than 30 characters'
+            );
+        }
+        return admin.firestore().collection('requests').add({
+            text: data.text,
+            upVotes: 0,
+        });
     });
 
 // // http function 1
