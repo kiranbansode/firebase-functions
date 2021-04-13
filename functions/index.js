@@ -49,7 +49,7 @@ exports.addRequest = functions
 //  upvote callable function
 exports.upvote = functions
     .region('asia-south1')
-    .https.onCall((data, context) => {
+    .https.onCall(async (data, context) => {
         // check auth state
         if (!context.auth) {
             throw new functions.https.HttpsError(
@@ -64,25 +64,22 @@ exports.upvote = functions
             .doc(context.auth.uid);
         const request = admin.firestore().collection('requests').doc(data.id);
 
-        return user.get().then((doc) => {
-            // check user hasn't already upvoted the request
-            if (doc.data().upvotedOn.includes(data.id)) {
-                throw new functions.https.HttpsError(
-                    'failed-precondition',
-                    'You can only upvote something once'
-                );
-            }
-            // update user array
-            return user
-                .update({
-                    upvotedOn: [...doc.data().upvotedOn, data.id],
-                })
-                .then(() => {
-                    // update upvotes on request
-                    return request.update({
-                        upvotes: admin.firestore.FieldValue.increment(1),
-                    });
-                });
+        const doc = await user.get();
+        // check user hasn't already upvoted the request
+        if (doc.data().upvotedOn.includes(data.id)) {
+            throw new functions.https.HttpsError(
+                'failed-precondition',
+                'You can only upvote something once'
+            );
+        }
+        // update user array
+        await user.update({
+            upvotedOn: [...doc.data().upvotedOn, data.id],
+        });
+
+        // update upvotes on request
+        return request.update({
+            upvotes: admin.firestore.FieldValue.increment(1),
         });
     });
 
