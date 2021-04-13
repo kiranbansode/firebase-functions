@@ -83,6 +83,34 @@ exports.upvote = functions
         });
     });
 
+//  log activities
+exports.logActivities = functions
+    .region('asia-south1')
+    .firestore.document('/{collection}/{id}')
+    .onCreate((snap, context) => {
+        console.log(snap.data());
+        const collection = context.params.collection;
+        const id = context.params.id;
+
+        const activities = admin.firestore().collection('activities');
+
+        if (collection === 'requests') {
+            return activities.add({
+                text: 'a new tutorial request was added',
+                id,
+            });
+        }
+
+        if (collection === 'users') {
+            return activities.add({
+                text: 'a new user was signed up',
+                id,
+            });
+        }
+
+        return null;
+    });
+
 // // http function 1
 // exports.randomNumber = functions
 //     .region('asia-south1')
